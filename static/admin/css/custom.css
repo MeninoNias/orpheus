@@ -1,0 +1,27 @@
+/* Tema escuro opcional */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --primary: #1a1a1a;
+        --secondary: #2c2c2c;
+        --accent: #3498db;
+    }
+    
+    body {
+        background: #121212;
+        color: #ffffff;
+    }
+    
+    .module {
+        background: #1a1a1a;
+    }
+}
+
+/* Animações e transições */
+.button, input[type=submit], input[type=button] {
+    transition: all 0.3s ease;
+}
+
+.button:hover, input[type=submit]:hover, input[type=button]:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
