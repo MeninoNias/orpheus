@@ -1,0 +1,29 @@
+volumes:
+  postgres_data: {}
+
+services:
+  app:
+      build:
+        context: .
+      image: orpheus_local_django
+      container_name: orpheus_local_django
+      depends_on:
+        - postgres
+      volumes:
+        - .:/app:z
+      env_file:
+        - .env
+      ports:
+        - '8000:8000'
+      command: /start
+      
+  postgres:
+    image: postgres:latest
+    environment:
+      POSTGRES_DB: orpheus
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    ports:
+      - "5432:5432"
