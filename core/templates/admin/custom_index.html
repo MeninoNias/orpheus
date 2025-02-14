@@ -1,0 +1,47 @@
+{% extends 'admin/index.html' %}
+{% load static %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+    :root {
+        --primary: #2c3e50;
+        --secondary: #34495e;
+        --accent: #3498db;
+    }
+    
+    #header {
+        background: var(--primary);
+        color: white;
+    }
+    
+    .module h2, .module caption {
+        background: var(--secondary);
+    }
+    
+    div.breadcrumbs {
+        background: var(--secondary);
+    }
+    
+    .module h2 a.section, .module caption a.section {
+        color: white;
+    }
+    
+    .button, input[type=submit], input[type=button], .submit-row input, a.button {
+        background: var(--accent);
+    }
+    
+    .version-info {
+        float: right;
+        padding: 10px;
+        color: #666;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="version-info">
+    Version: {{ version }} | Environment: {{ environment }}
+</div>
+{{ block.super }}
+{% endblock %}

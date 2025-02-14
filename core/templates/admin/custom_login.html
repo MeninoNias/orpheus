@@ -1,0 +1,38 @@
+{% extends 'admin/login.html' %}
+{% load static %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+    :root {
+        --primary: #2c3e50;
+        --secondary: #34495e;
+        --accent: #3498db;
+    }
+    
+    #header {
+        background: var(--primary);
+        color: white;
+    }
+    
+    .login #header {
+        height: auto;
+        padding: 15px 16px;
+        justify-content: center;
+    }
+    
+    .login .submit-row {
+        padding: 0;
+        margin: 20px 0 0;
+    }
+    
+    .submit-row input {
+        width: 100%;
+        margin: 0;
+    }
+    
+    .login #content {
+        padding: 20px;
+    }
+</style>
+{% endblock %}
