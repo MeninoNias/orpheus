@@ -1,0 +1,77 @@
+{% extends 'core/base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Downloader" %} - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .platform-card {
+        transition: transform 0.2s;
+    }
+    .platform-card:hover {
+        transform: translateY(-5px);
+    }
+    .platform-logo {
+        width: 64px;
+        height: 64px;
+        object-fit: contain;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="display-4">{% trans "Downloader" %}</h1>
+            <p class="lead">{% trans "Escolha uma plataforma para baixar suas músicas favoritas" %}</p>
+            <p>{% blocktrans with count=total_platforms %}
+                Temos {{ count }} plataforma{{ count|pluralize }} disponível{{ count|pluralize }}.
+            {% endblocktrans %}</p>
+        </div>
+    </div>
+
+    <div class="row row-cols-1 row-cols-md-3 g-4">
+        {% for platform in platforms %}
+        <div class="col">
+            <div class="card h-100 platform-card">
+                <div class="card-body text-center">
+                    {% if platform.logo %}
+                    <img src="{{ platform.logo }}" alt="{{ platform.name }}" class="platform-logo mb-3">
+                    {% endif %}
+                    <h5 class="card-title">{{ platform.name }}</h5>
+                    <p class="card-text text-muted">
+                        {% blocktrans with count=platform.tracks_count %}
+                        {{ count }} faixa{{ count|pluralize }} disponível{{ count|pluralize }}
+                        {% endblocktrans %}
+                    </p>
+                    <a href="{{ platform.get_absolute_url }}" class="btn btn-primary">
+                        {% trans "Acessar" %}
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12 text-center">
+            <div class="alert alert-info">
+                {% trans "Nenhuma plataforma disponível no momento." %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Animação suave ao carregar os cards
+    document.addEventListener('DOMContentLoaded', function() {
+        const cards = document.querySelectorAll('.platform-card');
+        cards.forEach((card, index) => {
+            setTimeout(() => {
+                card.style.opacity = '1';
+            }, index * 100);
+        });
+    });
+</script>
+{% endblock %}
