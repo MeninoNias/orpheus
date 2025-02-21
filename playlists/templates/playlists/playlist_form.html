@@ -1,0 +1,383 @@
+{% extends 'core/base.html' %}
+{% load i18n %}
+{% load crispy_forms_tags %}
+
+{% block title %}
+    {% if object %}
+        {% trans "Editar" %} {{ object.name }}
+    {% else %}
+        {% trans "Nova Playlist" %}
+    {% endif %} 
+    - {{ block.super }}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .playlist-form-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 2rem;
+        background: var(--card-bg);
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    }
+
+    .form-title {
+        color: #2c3e50;
+        margin-bottom: 2rem;
+        font-weight: 600;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-control {
+        border-radius: 8px;
+        border: 2px solid #e2e8f0;
+        padding: 0.75rem;
+        transition: all 0.3s ease;
+    }
+
+    .form-control:focus {
+        border-color: #4299e1;
+        box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.2);
+    }
+
+    .track-formset {
+        background: var(--card-bg);
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        border-radius: 12px;
+        border: 2px solid var(--secondary);
+    }
+
+    .youtube-search {
+    }
+
+    .search-input-group {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .search-input-group .form-control {
+        flex: 1;
+    }
+
+    .search-results {
+        max-height: 400px;
+        overflow-y: auto;
+        margin-top: 1rem;
+        {% comment %} border: 2px solid var(--secondary); {% endcomment %}
+        border-radius: 8px;
+        {% comment %} background: var(--card-bg); {% endcomment %}
+    }
+
+    .track-item {
+        display: flex;
+        align-items: center;
+        padding: 1rem;
+        transition: all 0.2s ease;
+    }
+
+    .track-item:hover {
+        background: var(--input-bg);
+    }
+
+    .track-item img {
+        width: 72px;
+        height: 54px;
+        object-fit: cover;
+        border-radius: 6px;
+        margin-right: 1rem;
+    }
+
+    .track-item-info {
+        flex: 1;
+    }
+
+    .track-item-info h5 {
+        font-size: 1rem;
+        font-weight: 600;
+        margin: 0 0 0.25rem;
+        color: var(--body-color);
+    }
+
+    .track-item-info small {
+        color: #64748b;
+        font-size: 0.875rem;
+    }
+
+    .handle {
+        color: #94a3b8;
+        margin-right: 1rem;
+        cursor: grab;
+        font-size: 1.25rem;
+    }
+
+    .selected-tracks {
+        background: var(--card-bg);
+        padding: 1.5rem;
+        border-radius: 12px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .btn-primary {
+        background: #4299e1;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 600;
+        transition: all 0.2s ease;
+    }
+
+    .btn-primary:hover {
+        background: #3182ce;
+        transform: translateY(-1px);
+    }
+
+    .btn-outline-secondary {
+        border: 2px solid #e2e8f0;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 600;
+        color: #64748b;
+        transition: all 0.2s ease;
+    }
+
+    .btn-outline-secondary:hover {
+        background: #f1f5f9;
+        color: #4a5568;
+    }
+
+    .delete-checkbox {
+        margin-left: 1rem;
+    }
+
+    .form-check-input {
+        width: 1.2rem;
+        height: 1.2rem;
+        margin-top: 0.2rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <h3>
+        {% if object %}
+            {{ object.name }}
+        {% else %}
+            {% trans "Nova Playlist" %}
+        {% endif %}
+    </h3>
+
+    <form method="post" id="playlist-form">
+        {% csrf_token %}
+        <div id="div_id_name" class="mb-3">
+             <label for="id_name" class="form-label requiredField">
+                Nome <span class="asteriskField">*</span> 
+            </label> 
+            <input type="text" name="name" value="{{form.name.value}}" maxlength="255" class="textinput form-control" required="" id="id_name"> 
+        </div>
+        <div id="div_id_description" class="mb-3"> 
+            <p>{{form.description.value}}</p> 
+        </div>
+        
+    
+        <div class="youtube-search mt-4">
+            <h3>{% trans "Buscar Faixas no YouTube" %}</h3>
+            <div class="input-group mb-4">
+                <input type="text" id="youtube-search" class="form-control" placeholder="{% trans 'Digite o nome da música ou artista...' %}">
+                <button class="btn btn-primary" type="button" id="search-button">
+                    {% trans "Buscar" %}
+                </button>
+            </div>
+            <div id="search-results" class="search-results"></div>
+
+        <fieldset class="track-formset mt-4">
+            {{ tracks.management_form }}
+            <div id="track-list" class="sortable">
+                {% for form in tracks.forms %}
+                    <div class="track-item" data-id="{{ forloop.counter0 }}">
+                        {{ form.id }}
+                        <span class="handle">☰</span>
+                        {{ form.track|as_crispy_field }}
+                        {{ form.position }}
+                        {% if form.instance.pk %}
+                            <div class="delete-checkbox">
+                                {{ form.DELETE|as_crispy_field }}
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+        </fieldset>
+
+        <div class="mt-4">
+            <button type="submit" class="btn btn-primary">
+                {% trans "Salvar" %}
+            </button>
+            <a href="{% url 'playlists:list' %}" class="btn btn-outline-secondary ms-2">
+                {% trans "Cancelar" %}
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+<script>
+    $(document).ready(function() {
+        let formCount = parseInt($('#id_tracks-TOTAL_FORMS').val());
+        const maxForms = parseInt($('#id_tracks-MAX_NUM_FORMS').val());
+        const minForms = parseInt($('#id_tracks-MIN_NUM_FORMS').val());
+        
+        $('#track-list').sortable({
+            axis: 'y',
+            handle: '.handle',
+            update: function(event, ui) {
+                $('.track-item').each(function(index) {
+                    $(this).find('input[id$="-position"]').val(index);
+                });
+            }
+        });
+
+        function updateFormIndexes() {
+            $('.track-item').each(function(index) {
+                const item = $(this);
+                const oldIndex = item.attr('data-id');
+                const newIndex = index;
+
+                item.find('input, select').each(function() {
+                    const elem = $(this);
+                    const name = elem.attr('name');
+                    if (name) {
+                        elem.attr('name', name.replace(
+                            new RegExp('tracks-' + oldIndex + '-'),
+                            'tracks-' + newIndex + '-'
+                        ));
+                    }
+                    const id = elem.attr('id');
+                    if (id) {
+                        elem.attr('id', id.replace(
+                            new RegExp('id_tracks-' + oldIndex + '-'),
+                            'id_tracks-' + newIndex + '-'
+                        ));
+                    }
+                });
+                item.attr('data-id', newIndex);
+            });
+        }
+
+        function addFormToTrackList(track) {
+            if (formCount >= maxForms) {
+                alert('Maximum number of tracks reached');
+                return;
+            }
+
+            console.log('track', track);
+
+            const newForm = `
+                <div class="track-item py-1" data-id="${formCount}">
+                    <span class="handle">☰</span>
+                    <div class="form-group my-0">
+                        <input type="text" name="tracks-${formCount}-track" value="${track.id}"
+                               id="id_tracks-${formCount}-track" class="form-control" required hidden>
+                        <div class="track-item-info">
+                            <h6 class="my-0">${track.title}</h6>
+                            <small>${formatDuration(track.duration)}</small>
+                        </div>
+                    </div>
+                    <input type="hidden" name="tracks-${formCount}-position" value="${formCount}"
+                           id="id_tracks-${formCount}-position">
+                    <div class="delete-checkbox">
+                        <div class="form-check">
+                            <input type="checkbox" name="tracks-${formCount}-DELETE"
+                                   id="id_tracks-${formCount}-DELETE" class="form-check-input">
+                            <label class="form-check-label" for="id_tracks-${formCount}-DELETE">Delete</label>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            $('#track-list').append(newForm);
+            formCount++;
+            $('#id_tracks-TOTAL_FORMS').val(formCount);
+            updateFormIndexes();
+        }
+
+        // Rest of your existing JavaScript code for search functionality
+        const searchInput = document.getElementById('youtube-search');
+        const searchButton = document.getElementById('search-button');
+        const resultsContainer = document.getElementById('search-results');
+        let timeoutId;
+
+        function performSearch() {
+            const query = searchInput.value.trim();
+            if (query.length < 3) return;
+
+            resultsContainer.style.display = 'block';
+            resultsContainer.innerHTML = '<div class="p-3 text-center"><div class="spinner-border text-primary" role="status"></div></div>';
+
+            fetch(`/playlists/search-tracks/?q=${encodeURIComponent(query)}`)
+                .then(response => response.json())
+                .then(data => {
+                    resultsContainer.innerHTML = '';
+                    if (data.tracks && data.tracks.length) {
+                        data.tracks.forEach(track => {
+                            const item = document.createElement('div');
+                            item.className = 'track-item';
+                            item.innerHTML = `
+                                <img src="${track.thumbnail}" alt="${track.title}">
+                                <div class="track-item-info">
+                                    <h5>${track.title}</h5>
+                                    <small>${formatDuration(track.duration)}</small>
+                                </div>
+                            `;
+                            
+                            item.addEventListener('click', () => {
+                                addFormToTrackList(track);
+                                resultsContainer.style.display = 'none';
+                                searchInput.value = '';
+                            });
+                            
+                            resultsContainer.appendChild(item);
+                        });
+                    } else {
+                        resultsContainer.innerHTML = '<div class="p-3 text-center text-muted">{% trans "Nenhum resultado encontrado" %}</div>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    resultsContainer.innerHTML = '<div class="p-3 text-center text-danger">{% trans "Erro ao buscar faixas" %}</div>';
+                });
+        }
+
+        function formatDuration(seconds) {
+            const minutes = Math.floor(seconds / 60);
+            const remainingSeconds = seconds % 60;
+            return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+        }
+
+        searchInput.addEventListener('input', () => {
+            clearTimeout(timeoutId);
+            timeoutId = setTimeout(performSearch, 500);
+        });
+
+        searchButton.addEventListener('click', performSearch);
+
+        document.addEventListener('click', function(e) {
+            if (!searchInput.contains(e.target) && !resultsContainer.contains(e.target) && !searchButton.contains(e.target)) {
+                resultsContainer.style.display = 'none';
+            }
+        });
+
+        // Initialize form with proper position values
+        $('.track-item').each(function(index) {
+            $(this).find('input[id$="-position"]').val(index);
+        });
+    });
+</script>
+{% endblock %}

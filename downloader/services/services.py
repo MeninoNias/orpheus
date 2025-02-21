@@ -8,3 +8,7 @@ class PlatformService(ABC):
     @abstractmethod
     def get_artist_info(self, artist_id):
         pass
+    
+    @abstractmethod
+    def search_faixa(self, faixa):
+        pass

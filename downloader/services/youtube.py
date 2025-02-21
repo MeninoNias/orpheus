@@ -1,6 +1,7 @@
 import yt_dlp
 from .services import PlatformService
-from ..models import Plataform
+from downloader.models import Platform
+from playlists.models import Track, Artist
 
 class YouTubeService(PlatformService):
     def download_audio(self, url, user):
@@ -36,3 +37,43 @@ class YouTubeService(PlatformService):
     def get_artist_info(self, artist_id):
         # Implemente a busca de informações do artista no YouTube
         pass
+    
+    def search_faixa(self, faixa):
+        faixas = []
+        ydl_opts = {
+            'format': 'bestaudio/best',
+            'quiet': True,
+            'extract_flat': True,
+            'skip_download': True,
+        }
+
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            try:
+                results = ydl.extract_info(f'ytsearch5:{faixa}', download=False)
+                
+                if not results or 'entries' not in results:
+                    return None
+                
+                for result in results['entries']:
+                    print('result', result)
+                    artist, _ = Artist.objects.get_or_create(
+                        name=result.get('uploader', 'Unknown Artist'),
+                        platform=Platform.objects.get(name='YouTube'),
+                        owner=self.user
+                    )
+                    track_data = {
+                        'title': result.get('title', 'Unknown Title'),
+                        'artist': artist.name,
+                        'platform': 'YouTube',
+                        'url': f"https://www.youtube.com/watch?v={result['id']}",
+                        'duration': result.get('duration', 0),
+                        'source_type': 'URL',
+                        'thumbnail': result.get('thumbnails', [{'url': ''}])[0]['url']
+                    }
+                    faixas.append(track_data)
+
+                return faixas
+                
+            except Exception as e:
+                print(f"Error searching track: {str(e)}")
+                return faixas
