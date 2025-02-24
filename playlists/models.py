@@ -58,6 +58,7 @@ class Track(BaseOwnerModel):
     audio_file = models.FileField(
         _('Arquivo de áudio'),
         upload_to='tracks/',
+        blank=True,
         help_text=_('Arquivo de áudio processado')
     )
     source_type = models.CharField(

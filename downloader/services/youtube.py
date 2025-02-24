@@ -55,7 +55,6 @@ class YouTubeService(PlatformService):
                     return None
                 
                 for result in results['entries']:
-                    print('result', result)
                     artist, _ = Artist.objects.get_or_create(
                         name=result.get('uploader', 'Unknown Artist'),
                         platform=Platform.objects.get(name='YouTube'),
