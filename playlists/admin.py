@@ -131,3 +131,12 @@ class PlaylistAdmin(admin.ModelAdmin):
         css = {
             'all': ('admin/css/custom_admin.css',)
         }
+
+@admin.register(PlaylistTrack, site=default_site)
+class PlayListTrackAdmin(admin.ModelAdmin):
+    list_display = ['track', 'position', 'playlist']
+    list_filter = ['playlist']
+    search_fields = ['track__title', 'playlist__name']
+    raw_id_fields = ['track', 'playlist']
+    readonly_fields = ['created_at', 'updated_at']
+    

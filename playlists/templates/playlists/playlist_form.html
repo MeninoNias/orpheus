@@ -27,7 +27,7 @@
         {% endif %}
     </h3>
 
-    <form method="post" id="playlist-form">
+    <form id="playlist-form" method="post">
         {% csrf_token %}
         {{ form|crispy }}
 
@@ -48,13 +48,13 @@
 
         <div class="selected-tracks mt-4">
             <h5>{% trans "Faixas Selecionadas" %}</h5>
-            {{ inlines.0.management_form }}
             <div id="track-list" class="sortable">
                 {% for form in inlines.0.forms %}
                 <div class="track-item" data-id="{{ forloop.counter0 }}">
                     {{ form.id }}
                     <span class="handle">☰</span>
                     {{ form.track_url }}
+                    {{ form.track }}
                     {{ form.position }}
                     {% if form.instance.track %}
                     <div class="track-info">
@@ -85,13 +85,13 @@
 <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 <script>
     $(document).ready(function () {
-        // Inicialização das variáveis do formset
+        // Inicialização das variáveis do formset com o prefixo correto
         let formCount = parseInt($('#id_playlist_tracks-TOTAL_FORMS').val()) || 0;
-        const maxForms = parseInt($('#id_tracks-MAX_NUM_FORMS').val());
-        const minForms = parseInt($('#id_tracks-MIN_NUM_FORMS').val());
-        const formRegex = RegExp(`tracks-(\\d+)-`, 'g');
+        const maxForms = parseInt($('#id_playlist_tracks-MAX_NUM_FORMS').val()) || 1000;
+        const minForms = parseInt($('#id_playlist_tracks-MIN_NUM_FORMS').val()) || 0;
+        const formRegex = RegExp(`playlist_tracks-(\\d+)-`, 'g');
 
-        console.log('Form Count:', formCount);
+        console.log('Initial form count:', formCount);
 
         // Configuração do Sortable
         $('#track-list').sortable({
@@ -125,15 +125,14 @@
             });
 
             // Atualiza o total de formulários
-            $('#id_tracks-TOTAL_FORMS').val($('.track-item').length);
+            $('#id_playlist_tracks-TOTAL_FORMS').val($('.track-item').length);
         }
 
         // Atualiza o índice de um elemento específico
         function updateElementIndex(elem, oldIndex, newIndex) {
-            const idRegex = new RegExp(`tracks-${oldIndex}-`, 'g');
-            const nameRegex = new RegExp(`tracks-${oldIndex}-`, 'g');
-
-            const newIdPrefix = `tracks-${newIndex}-`;
+            const idRegex = new RegExp(`playlist_tracks-${oldIndex}-`, 'g');
+            const nameRegex = new RegExp(`playlist_tracks-${oldIndex}-`, 'g');
+            const newIdPrefix = `playlist_tracks-${newIndex}-`;
 
             if (elem.attr('id')) {
                 elem.attr('id', elem.attr('id').replace(idRegex, newIdPrefix));
@@ -153,53 +152,27 @@
             const newForm = `
                 <div class="track-item" data-id="${formCount}">
                     <span class="handle">☰</span>
-                    <input type="hidden" name="tracks-${formCount}-track_url" 
-                           id="id_tracks-${formCount}-track_url" value="${track.url}">
-                    <input type="hidden" name="tracks-${formCount}-position" 
-                           id="id_tracks-${formCount}-position" value="${formCount}">
+                    <input type="hidden" name="playlist_tracks-${formCount}-track_url" 
+                           id="id_playlist_tracks-${formCount}-track_url" 
+                           value="${track.url}" required>
+                    <input type="hidden" name="playlist_tracks-${formCount}-position" 
+                           id="id_playlist_tracks-${formCount}-position" 
+                           value="${formCount+1}">
                     <div class="track-item-info">
                         <h6>${track.title}</h6>
                         <small>${formatDuration(track.duration)}</small>
                     </div>
                     <div class="delete-checkbox">
-                        <input type="checkbox" name="tracks-${formCount}-DELETE" 
-                               id="id_tracks-${formCount}-DELETE" class="form-check-input">
+                        <input type="checkbox" name="playlist_tracks-${formCount}-DELETE" 
+                               id="id_playlist_tracks-${formCount}-DELETE">
                     </div>
-                    <input type="hidden" name="tracks-${formCount}-id" id="id_tracks-${formCount}-id" value="">
                 </div>
             `;
 
             $('#track-list').append(newForm);
-            updateFormCount();
-            console.log(`Added new track form: ${track.title}`);
+            formCount++;
+            $('#id_playlist_tracks-TOTAL_FORMS').val(formCount);
         }
-
-        // Handler para submissão do formulário
-        $('#playlist-form').on('submit', function (e) {
-            e.preventDefault();
-
-            console.log('Form Data:', $(this).serialize());
-
-            // Atualiza as posições antes de enviar
-            updatePositions();
-            updateFormIndexes();
-            updateFormCount();
-
-            // Verifica se há tracks
-            if ($('.track-item').length === 0) {
-                alert('{% trans "Adicione pelo menos uma faixa à playlist" %}');
-                return;
-            }
-
-            // Debug dos dados do form
-            const formData = new FormData(this);
-            for (let pair of formData.entries()) {
-                console.log(pair[0], pair[1]);
-            }
-
-            // Envia o formulário
-            this.submit();
-        });
 
         // Função para formatar duração
         function formatDuration(seconds) {
@@ -225,7 +198,7 @@
                     }
 
                     const html = results.map(track => `
-                        <div class="track-item">
+                        <div class="search-track-item">
                             <img src="${track.thumbnail}" alt="${track.title}">
                             <div class="track-item-info">
                                 <h5>${track.title}</h5>
@@ -280,11 +253,10 @@
 
         // Atualiza o contador de forms
         function updateFormCount() {
-            // TO DO - AJUSTAR o track-item por que como ta sendo o mesmo no form set e na busca ta quebrando
-            formCount = $('.track-item').length;
-            console.log('Current form count:', formCount);
-            $('#id_playlist_tracks-TOTAL_FORMS').val(formCount);
-            console.log('Updated form count:', formCount);
+            const currentCount = $('#track-list .track-item').length;
+            $('#id_playlist_tracks-TOTAL_FORMS').val(currentCount);
+            formCount = currentCount;
+            console.log('Updated form count:', currentCount);
         }
 
     });

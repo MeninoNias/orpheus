@@ -218,3 +218,46 @@
   height: 1.2rem;
   margin-top: 0.2rem;
 }
+
+.search-track-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  border-bottom: 1px solid var(--secondary);
+  background: var(--card-bg);
+}
+
+.search-track-item:last-child {
+  border-bottom: none;
+}
+
+.search-track-item img {
+  width: 64px;
+  height: 64px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+.track-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: var(--card-bg);
+  border-radius: 4px;
+  margin-bottom: 0.5rem;
+}
+
+.track-item .handle {
+  cursor: move;
+  color: var(--secondary);
+}
+
+.track-item-info {
+  flex: 1;
+}
+
+.track-info {
+  flex: 1;
+}

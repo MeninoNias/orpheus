@@ -38,6 +38,40 @@ class YouTubeService(PlatformService):
         # Implemente a busca de informações do artista no YouTube
         pass
     
+    def get_plataform(self):
+        return Platform.objects.get_or_create(name='YouTube')[0]
+    
+    def get_track_info(self, url):
+        ydl_opts = {
+            'format': 'bestaudio/best',
+            'quiet': True,
+            'extract_flat': True,
+            'skip_download': True,
+        }
+
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            try:
+                info = ydl.extract_info(url, download=False)
+                print('TASDA', self.get_plataform())
+                artist, _ = Artist.objects.get_or_create(
+                    name=info.get('uploader', 'Unknown Artist'),
+                    platform=self.get_plataform(),
+                    owner=self.user
+                )
+                track_data = {
+                    'title': info.get('title', 'Unknown Title'),
+                    'artist': artist,
+                    'platform': self.get_plataform(),
+                    'url': url,
+                    'duration': info.get('duration', 0),
+                    'source_type': 'URL',
+                    'thumbnail': info.get('thumbnails', [{'url': ''}])[0]['url']
+                }
+                return track_data
+            except Exception as e:
+                print(f"Error getting track info: {str(e)}")
+                return None
+    
     def search_faixa(self, faixa):
         faixas = []
         ydl_opts = {

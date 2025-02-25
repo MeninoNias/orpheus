@@ -51,16 +51,21 @@ class PlaylistCreateView(LoginRequiredMixin, CreateWithInlinesView):
         form.instance.user = self.request.user
         form.instance.owner = self.request.user
         
-        print("Form Data:", form.cleaned_data)
-        print("Inlines Data:", [inline.cleaned_data for inline in inlines[0]])
+        # Passar o request para os forms do inline
+        for formset in inlines:
+            formset.request = self.request
+            for inline_form in formset.forms:
+                inline_form.request = self.request
         
         response = super().forms_valid(form, inlines)
 
-        for index, formset in enumerate(inlines):
-            for inline_form in formset:
-                if inline_form.cleaned_data and not inline_form.cleaned_data.get('DELETE', False):
-                    instance = inline_form.instance
+        for formset in inlines:
+            for index, inline_form in enumerate(formset.forms):
+                if inline_form.is_valid() and not inline_form.cleaned_data.get('DELETE', False):
+                    instance = inline_form.save(commit=False)
                     instance.position = index
+                    instance.playlist = form.instance
+                    instance.owner = self.request.user
                     instance.save()
 
         return response
@@ -77,24 +82,42 @@ class PlaylistUpdateView(LoginRequiredMixin, UpdateWithInlinesView):
         return super().get_queryset().filter(user=self.request.user)
 
     def forms_valid(self, form, inlines):
-        print(self.request.POST)
-        response = super().forms_valid(form, inlines)
+        form.instance.user = self.request.user
+        form.instance.owner = self.request.user
         
-        print("Form Data:", form.cleaned_data)
-        print("Inlines Data:", [
-            [f.cleaned_data for f in formset.forms] 
-            for formset in inlines
-        ])
-        
-        for formset in inlines:
-            for index, inline_form in enumerate(formset.forms):
-                if inline_form.is_valid() and not inline_form.cleaned_data.get('DELETE'):
-                    instance = inline_form.save(commit=False)
-                    instance.position = index
-                    instance.playlist = form.instance
-                    instance.save()
+        try:
+            # Primeiro, salva o formulário principal
+            self.object = form.save()
+            
+            # Depois, processa os inlines
+            for formset in inlines:
+                # Deleta todos os tracks existentes para recriar com novas posições
+                self.object.playlist_tracks.all().delete()
+                
+                # Filtra apenas os formulários válidos e não marcados para deleção
+                valid_forms = [
+                    f for f in formset.forms 
+                    if f.is_valid() and not f.cleaned_data.get('DELETE')
+                ]
+                
+                # Salva cada track com sua nova posição
+                for index, inline_form in enumerate(valid_forms):
+                    try:
+                        print(f"Salvando track {index}: {inline_form.cleaned_data}")
+                        instance = inline_form.save(commit=False)
+                        instance.position = index + 1
+                        instance.playlist = self.object
+                        instance.owner = self.request.user
+                        instance.save()
+                        print(f"Salvou track {index}: {instance}")
+                    except Exception as e:
+                        print(f"Erro ao salvar track {index}: {e}")
 
-        return response
+            return super().forms_valid(form, inlines)
+            
+        except Exception as e:
+            print(f"Erro no forms_valid: {e}")
+            raise
 
 
 class SearchTrackView(LoginRequiredMixin, View):
